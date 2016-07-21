@@ -1,0 +1,34 @@
+#!/bin/bash
+
+iptables="/sbin/iptables"
+my_ip=$(/sbin/ifconfig | /usr/bin/awk '/^[ |\t]+inet addr:/{gsub("addr:", "", $2); print $2}' | head -n 1)
+
+$iptables -t nat -X REDSOCKS 2>/dev/null
+$iptables -t nat -N REDSOCKS 2>/dev/null
+
+$iptables -t nat -A REDSOCKS -p tcp --dport 7980:7999 -j RETURN
+$iptables -t nat -A REDSOCKS -p tcp --dport 1080  -j RETURN
+
+# 169.254.0.0/16 172.16.0.0/12 224.0.0.0/4 240.0.0.0/4
+for hp in \
+0.0.0.0/8 127.0.0.0/8 192.168.0.0/16 \
+10.0.0.0/8 16.0.0.0/8
+do
+  $iptables -t nat -A REDSOCKS -d "$hp" -j RETURN
+done
+
+#cat /lancez/conf/etc/squid3/list.ip.gfw.blocked | \
+#awk '/^[0-9]+\./{print}' | \
+#while read hp
+#do
+#  $iptables -t nat -A REDSOCKS -p tcp -j DNAT -d "$hp" \
+#    --to-destination $my_ip:7980
+#done
+
+$iptables -t nat -A REDSOCKS -p tcp -j DNAT --to-destination $my_ip:7998
+
+# $iptables -t nat -I OUTPUT 1 -p tcp -j REDSOCKS 
+# $iptables -t nat -A PREROUTING -p tcp -s 192.168.0.0/16 -j REDSOCKS
+
+exit 0
+

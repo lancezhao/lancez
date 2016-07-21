@@ -1,0 +1,38 @@
+#!/bin/sh 
+#
+# rc.lance
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+
+iptables="/sbin/iptables"
+modprobe="/sbin/modprobe"
+
+echo 1 > /proc/sys/net/ipv4/ip_forward
+/sbin/sysctl -w net.ipv4.ip_forward=1 1>/dev/null 2>&1
+
+$modprobe ip_tables 2> /dev/null
+$modprobe ip_nat_ftp 2> /dev/null
+$modprobe ip_nat_irc 2> /dev/null
+$modprobe ip_conntrack 2> /dev/null
+$modprobe ip_conntrack_ftp 2> /dev/null
+$modprobe ip_conntrack_irc 2> /dev/null
+
+$iptables -F
+$iptables -X
+$iptables -Z
+$iptables -F -t nat
+$iptables -X -t nat
+$iptables -Z -t nat
+$iptables -P INPUT   ACCEPT
+$iptables -P OUTPUT  ACCEPT
+$iptables -P FORWARD ACCEPT
+$iptables -t nat -P PREROUTING   ACCEPT
+$iptables -t nat -P POSTROUTING  ACCEPT
+$iptables -t nat -P OUTPUT       ACCEPT
+
+#$iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+exit 0
+
