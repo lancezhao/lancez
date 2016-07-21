@@ -1,0 +1,47 @@
+#!/bin/bash
+# ~/.profile: executed by Bourne-compatible login shells.
+
+if [ "$BASH" ]; then
+  if [ -f ~/.bashrc ]; then
+    . ~/.bashrc
+  fi
+fi
+
+function lzx_service_status()
+{
+  ls -alF /etc | \
+  awk '( \
+    $1 ~ /^l.*/ && \
+    $10 ~ /->/ && \
+    $11 ~ /^\/lancez\/.*\/$/ )\
+  { print $9 }' | \
+  while read dn ;\
+  do \
+    dpkg -S /etc/$dn 2> /dev/null ;\
+  done  | \
+  awk '{\
+    gsub(/:/, "", $1); \
+    print $1}' | \
+  while read sn; \
+  do \
+    echo -n "Service [$sn]:  "; \
+    service $sn status; \
+    echo ""; \
+  done
+  return
+}
+
+alias ll='ls -alF'
+alias rpistat='/lancez/scpt/statics/rpistat'
+alias vpnstat='/lancez/scpt/statics/vpnstat'
+alias ubup='apt-get update -qy; apt-get upgrade -qy; apt-get dist-upgrade -qy; apt-get autoremove -qy'
+alias svst='lzx_service_status'
+
+[ -f "/usr/sbin/sysv-rc-conf" ] && \
+  alias "chkconfig=/usr/sbin/sysv-rc-conf"
+
+#RPI: run "dpkg-reconfigure tzdata"
+export TZ='Asia/Shanghai'
+
+mesg n
+
